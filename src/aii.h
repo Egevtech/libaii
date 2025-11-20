@@ -1,6 +1,10 @@
 #ifndef LIBAII_LIBRARY_H
 #define LIBAII_LIBRARY_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum InstallStatus {
     SUCCESS = 0,
     ERROR,
@@ -23,5 +27,9 @@ enum InstallStatus install(const char* src, const char* dest);
  * @return result
  */
 enum InstallStatus generateDesktop(const char* filename, const char* title, const char* descript, const char* icon);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // LIBAII_LIBRARY_H
