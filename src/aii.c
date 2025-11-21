@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <unistd.h>
 
-enum InstallStatus install( const char* src, const char* dest ) {
+enum Status install( const char* src, const char* dest ) {
     FILE* fsrc = fopen(src, "rb");
     FILE* fdest = fopen(dest, "wb");
 
@@ -17,6 +17,19 @@ enum InstallStatus install( const char* src, const char* dest ) {
     while ( (bytesRead = fread(buffer, sizeof(char), 1024, fsrc) ) > 0 )
         fwrite(buffer, sizeof(char), bytesRead, fdest);
 
+
+    return SUCCESS;
+}
+
+enum Status generateDesktop(
+    const char *output,
+    const char *name,
+    const char *exec,
+    int terminal,
+    const char* type,
+    const char* icon,
+    const char* comment,
+    const char* categories) {
 
     return SUCCESS;
 }

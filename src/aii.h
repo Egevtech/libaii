@@ -5,7 +5,7 @@
 extern "C" {
 #endif
 
-enum InstallStatus {
+enum Status {
     SUCCESS = 0,
     ERROR,
 };
@@ -16,17 +16,25 @@ enum InstallStatus {
  * @param dest - destination
  * @return result
  */
-enum InstallStatus install(const char* src, const char* dest);
+enum Status install(const char* src, const char* dest);
 
 /**
  * Generate .desktop file
- * @param filename name for .desktop file
- * @param title name of app
- * @param descript app description
+ * @param output name for .desktop file
+ * @param name name of app
+ * @param exec application binary
+ * @param terminal run in terminal
+ * @param type application type
  * @param icon path to icon
+ * @param comment comment for application
+ * @param categories application categories
+ *
  * @return result
  */
-enum InstallStatus generateDesktop(const char* filename, const char* title, const char* descript, const char* icon);
+enum Status generateDesktop(
+    const char* output, const char *name, const char* exec,
+    int terminal, const char* type, const char* icon,
+    const char* comment, const char* categories);
 
 #ifdef __cplusplus
 }
