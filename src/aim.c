@@ -7,14 +7,47 @@
 #include <stdlib.h>
 #include <sys/mount.h>
 #include <fuse/fuse.h>
+#include <linux/loop.h>
 
-int mount_appimage(const char* from, const char* mountpoint) {
-    if (!access(mountpoint, F_OK) && !mkdir(mountpoint, 0775))
-            return -1;
+struct mount_data {
+    int fd, loop_fd;
+};
 
-    return mount(from, mountpoint, "fuse", MS_RDONLY, "");
+struct mount_data *mount_appimage(const char* from, const char* mountpoint) {
+    static struct mount_data md = {0};
+
+    if (access(mountpoint, F_OK) == -1)
+        if (mkdir(mountpoint, 0775) == -1)
+            return NULL;
+
+    int fd = open(from, O_RDONLY);
+    if (fd == -1)
+        return NULL;
+
+    int loop_fd = open("/dev/loop0", O_RDWR);
+    if (loop_fd == -1)
+        return NULL;
+
+    if ( ioctl(loop_fd, LOOP_SET_FD, fd) == -1 ) {
+        close(loop_fd);
+        close(fd);
+        return NULL;
+    }
+
+    if (mount("/dev/loop0", mountpoint, "squashfs", MS_RDONLY, "") == -1) {
+        close(loop_fd);
+        close(fd);
+        return NULL;
+    }
+
+    md.fd = fd;
+    md.loop_fd = loop_fd;
+
+    return &md;
 }
 
-int umount_appimage(const char* mountpoint) {
+int umount_appimage(const char* mountpoint, struct mount_data *md) {
+    close(md->loop_fd);
+    close(md->fd);
     return umount2(mountpoint, MNT_FORCE);
 }
