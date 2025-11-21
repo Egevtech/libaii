@@ -34,7 +34,7 @@ struct mount_data *mount_appimage(const char* from, const char* mountpoint) {
         return NULL;
     }
 
-    if (mount("/dev/loop0", mountpoint, "squashfs", MS_RDONLY, "") == -1) {
+    if (mount("/dev/loop0", mountpoint, "fuse", MS_RDONLY, "") == -1) {
         close(loop_fd);
         close(fd);
         return NULL;
@@ -49,5 +49,7 @@ struct mount_data *mount_appimage(const char* from, const char* mountpoint) {
 int umount_appimage(const char* mountpoint, struct mount_data *md) {
     close(md->loop_fd);
     close(md->fd);
-    return umount2(mountpoint, MNT_FORCE);
+    int res = umount2(mountpoint, MNT_FORCE);
+    ioctl(md->loop_fd, LOOP_CLR_FD, 0);
+    return res;
 }
