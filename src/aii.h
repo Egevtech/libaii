@@ -36,6 +36,8 @@ enum Status generateDesktop(
     int terminal, const char* type, const char* icon,
     const char* comment, const char* categories);
 
+int mount_appimage(const char* source, const char* mountpoint);
+int umount_appimage(const char* mountpoint);
 #ifdef __cplusplus
 }
 #endif
