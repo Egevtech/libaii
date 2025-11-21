@@ -4,6 +4,9 @@
 #include <string.h>
 #include <unistd.h>
 
+extern int mount_appimage(const char* source, const char* mountpoint);
+extern int umount_appimage(const char* mountpoint);
+
 enum Status install( const char* src, const char* dest ) {
     FILE* fsrc = fopen(src, "rb");
     FILE* fdest = fopen(dest, "wb");
@@ -38,7 +41,7 @@ enum Status generateDesktop(
         return ERROR;
     }
 
-    char data[5];
+    char data[6];
     if ( terminal == 0 )
         strcat(data, "false");
     else
@@ -50,6 +53,19 @@ enum Status generateDesktop(
         name, exec, terminal, type, icon, comment, categories);
 
     fclose(desktopFile);
+
+    return SUCCESS;
+}
+
+/**
+ * Unpack .AppImage into new folder
+ * @param src .AppImage to unpack
+ * @param dest folder to unpack(it will be created
+ * @return result
+ */
+enum Status unpackAppimage(const char* src, const char* dest) {
+
+
 
     return SUCCESS;
 }
