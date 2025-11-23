@@ -1,8 +1,13 @@
 #include "aii.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
+#include <fcntl.h>
+#include <sys/ioctl.h>
+#include <linux/loop.h>
 
 enum Status install( const char* src, const char* dest ) {
     FILE* fsrc = fopen(src, "rb");
@@ -38,7 +43,7 @@ enum Status generateDesktop(
         return ERROR;
     }
 
-    char data[5];
+    char data[6];
     if ( terminal == 0 )
         strcat(data, "false");
     else
@@ -52,4 +57,53 @@ enum Status generateDesktop(
     fclose(desktopFile);
 
     return SUCCESS;
+}
+
+struct mount_device {
+    int status;
+
+    int src_fd, loop_fd;
+};
+
+struct mount_device mount_loop(const char* src, const char* loop) {
+
+    struct mount_device mdev = {.status=EXIT_SUCCESS};
+
+    mdev.loop_fd = open(loop, O_RDWR);
+    mdev.src_fd = open(src, O_RDONLY);
+
+    if ( mdev.loop_fd || mdev.src_fd ) {
+        goto EXIT_ERR;
+    }
+
+    if ( ioctl(mdev.loop_fd, LOOP_SET_FD, mdev.src_fd ) ) {
+        goto EXIT_ERR;
+    }
+
+    return mdev;
+
+    EXIT_ERR:
+    close(mdev.loop_fd);
+    close(mdev.src_fd);
+
+    return (struct mount_device) {.status=EXIT_FAILURE };
+}
+
+int unpack_appimage(const char* src, const char* mount_point) {
+    struct mount_device mdev = mount_loop(src, mount_point);
+
+    if ( mdev.status )
+        goto EXIT_ERR;
+
+    goto EXIT_OK;
+
+    EXIT_ERR:
+    close(mdev.loop_fd);
+    close(mdev.src_fd);
+    return EXIT_FAILURE;
+
+    EXIT_OK:
+    close(mdev.loop_fd);
+    close(mdev.src_fd);
+    return EXIT_SUCCESS;
 }

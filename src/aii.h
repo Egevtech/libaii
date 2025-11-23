@@ -36,6 +36,14 @@ enum Status generateDesktop(
     int terminal, const char* type, const char* icon,
     const char* comment, const char* categories);
 
+/**
+* Unpack AppImage file
+* @param appimage Path to the AppImage file to unpack
+* @param mount_point Directory where the AppImage will be mounted and unpacked
+* @return 0 on success, negative value on error
+*/
+int unpack_appimage(const char* appimage, const char* mount_point);
+
 #ifdef __cplusplus
 }
 #endif
