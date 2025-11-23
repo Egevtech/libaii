@@ -8,6 +8,8 @@
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <linux/loop.h>
+#include <sys/mount.h>
+#include <sys/stat.h>
 
 enum Status install( const char* src, const char* dest ) {
     FILE* fsrc = fopen(src, "rb");
@@ -114,23 +116,36 @@ int umount_loop(struct mount_device *mdev) {
     return 0;
 }
 
-int unpack_appimage(const char* appimage, const char*) {
+int unpack_appimage(const char* appimage, const char* mount_point) {
     struct mount_device mdev = mount_loop(appimage);
 
     if ( mdev.status )
         goto EXIT_ERR;
 
+    if ( access(mount_point, F_OK) )
+        if ( mkdir(mount_point, 0755) )
+            goto EXIT_ERR;
 
+    const char* fs_type = "auto";
+
+    char loop_device[15];
+    sprintf(loop_device, "/dev/loop%d", mdev.loop_device_number);
+
+
+    if ( mount(loop_device, mount_point, fs_type, 0, NULL) )
+        goto EXIT_ERR;
+
+    printf("Successfuly mounted. Press Return to umount.\n");
+
+    umount2(loop_device, MNT_FORCE);
 
     goto EXIT_OK;
 
     EXIT_ERR:
-    close(mdev.loop_fd);
-    close(mdev.src_fd);
+    umount_loop(&mdev);
     return EXIT_FAILURE;
 
     EXIT_OK:
-    close(mdev.loop_fd);
-    close(mdev.src_fd);
+    umount_loop(&mdev);
     return EXIT_SUCCESS;
 }
