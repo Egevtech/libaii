@@ -102,7 +102,7 @@ struct mount_device mount_loop(const char* src) {
     return (struct mount_device) {.status=EXIT_FAILURE };
 }
 
-int unmount_loop(struct mount_device *mdev) {
+int umount_loop(struct mount_device *mdev) {
     ioctl(mdev->loop_fd, LOOP_CLR_FD, 0);
 
     close(mdev->loop_fd);
@@ -113,6 +113,7 @@ int unmount_loop(struct mount_device *mdev) {
 
     return 0;
 }
+
 int unpack_appimage(const char* appimage, const char*) {
     struct mount_device mdev = mount_loop(appimage);
 
