@@ -80,6 +80,7 @@ struct mount_device mount_loop(const char* src) {
         goto EXIT_ERR;
 
     mdev.loop_device_number = loop_num;
+    sprintf(loop, "/dev/loop%d", mdev.loop_device_number);
 
     mdev.loop_fd = open(loop, O_RDWR);
     mdev.src_fd = open(src, O_RDONLY);
