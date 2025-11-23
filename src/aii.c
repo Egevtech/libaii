@@ -71,7 +71,7 @@ struct mount_device mount_loop(const char* src) {
     char loop[15] = "/dev/loop";
 
     const int loop_control = open("/dev/loop-control", O_RDWR);
-    if (loop_control)
+    if (loop_control < 0)
         goto EXIT_ERR;
 
     int loop_num = ioctl(loop_control, LOOP_CTL_GET_FREE);
@@ -83,7 +83,7 @@ struct mount_device mount_loop(const char* src) {
     mdev.loop_fd = open(loop, O_RDWR);
     mdev.src_fd = open(src, O_RDONLY);
 
-    if ( mdev.loop_fd || mdev.src_fd ) {
+    if ( mdev.loop_fd < 0 || mdev.src_fd < 0 ) {
         goto EXIT_ERR;
     }
 
