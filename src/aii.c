@@ -68,7 +68,7 @@ struct mount_device {
     int loop_device_number;
 };
 
-struct mount_device mount_loop(const char* src) {
+struct mount_device mount_loop(const char* src, int offset) {
     struct mount_device mdev = {.status=EXIT_SUCCESS, .src_fd=-1, .loop_fd=-1, -1};
 
     char loop[15] = "/dev/loop";
@@ -86,6 +86,29 @@ struct mount_device mount_loop(const char* src) {
 
     mdev.loop_fd = open(loop, O_RDWR);
     mdev.src_fd = open(src, O_RDONLY);
+
+    if ( offset != -1 ) {
+        struct loop_info64 lf;
+
+        FILE* cfp;
+        char cmd[256], line[24];
+
+        sprintf(cmd, "%s --appimage-offset", src);
+        cfp = popen(cmd, "r");
+
+        fgets(line, sizeof(line), cfp);
+        strcat(line, "\0");
+
+        pclose(cfp);
+
+        lf.lo_offset = atol(line);
+
+        if (lf.lo_offset < 0)
+            goto EXIT_ERR;
+
+        if (ioctl(mdev.loop_fd, LOOP_SET_FD, lf.lo_offset) )
+            goto EXIT_ERR;
+    }
 
     if ( mdev.loop_fd < 0 || mdev.src_fd < 0 ) {
         goto EXIT_ERR;
@@ -117,7 +140,7 @@ int umount_loop(struct mount_device *mdev) {
 }
 
 int unpack_appimage(const char* appimage, const char* mount_point) {
-    struct mount_device mdev = mount_loop(appimage);
+    struct mount_device mdev = mount_loop(appimage, -1);
 
     if ( mdev.status )
         goto EXIT_ERR;
@@ -131,9 +154,16 @@ int unpack_appimage(const char* appimage, const char* mount_point) {
     char loop_device[15];
     sprintf(loop_device, "/dev/loop%d", mdev.loop_device_number);
 
+    int mount_tries = 0;
+    MOUNT:
+    if ( mount(loop_device, mount_point, fs_type, 0, NULL) ) {
+        if ( mount_tries > 0 )
+            goto EXIT_ERR;
+        mdev = mount_loop(loop_device, 0);
+        mount_tries++;
+        goto MOUNT;
+    }
 
-    if ( mount(loop_device, mount_point, fs_type, 0, NULL) )
-        goto EXIT_ERR;
 
     printf("Successfuly mounted. Press Return to umount.\n");
 
