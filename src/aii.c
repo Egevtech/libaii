@@ -63,10 +63,11 @@ struct mount_device {
     int status;
 
     int src_fd, loop_fd;
+    int loop_device_number;
 };
 
 struct mount_device mount_loop(const char* src) {
-    struct mount_device mdev = {.status=EXIT_SUCCESS, .src_fd=-1, .loop_fd=-1};
+    struct mount_device mdev = {.status=EXIT_SUCCESS, .src_fd=-1, .loop_fd=-1, -1};
 
     char loop[15] = "/dev/loop";
 
@@ -78,7 +79,7 @@ struct mount_device mount_loop(const char* src) {
     if (loop_num < 0)
         goto EXIT_ERR;
 
-    sprintf(loop, "/dev/loop%d", loop_num);
+    mdev.loop_device_number = loop_num;
 
     mdev.loop_fd = open(loop, O_RDWR);
     mdev.src_fd = open(src, O_RDONLY);
