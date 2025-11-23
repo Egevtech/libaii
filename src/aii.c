@@ -65,9 +65,20 @@ struct mount_device {
     int src_fd, loop_fd;
 };
 
-struct mount_device mount_loop(const char* src, const char* loop) {
+struct mount_device mount_loop(const char* src) {
+    struct mount_device mdev = {.status=EXIT_SUCCESS, .src_fd=-1, .loop_fd=-1};
 
-    struct mount_device mdev = {.status=EXIT_SUCCESS};
+    char loop[15] = "/dev/loop";
+
+    const int loop_control = open("/dev/loop-control", O_RDWR);
+    if (loop_control)
+        goto EXIT_ERR;
+
+    int loop_num = ioctl(loop_control, LOOP_CTL_GET_FREE);
+    if (loop_num < 0)
+        goto EXIT_ERR;
+
+    sprintf(loop, "/dev/loop%d", loop_num);
 
     mdev.loop_fd = open(loop, O_RDWR);
     mdev.src_fd = open(src, O_RDONLY);
@@ -89,11 +100,13 @@ struct mount_device mount_loop(const char* src, const char* loop) {
     return (struct mount_device) {.status=EXIT_FAILURE };
 }
 
-int unpack_appimage(const char* src, const char* mount_point) {
-    struct mount_device mdev = mount_loop(src, mount_point);
+int unpack_appimage(const char* appimage, const char*) {
+    struct mount_device mdev = mount_loop(appimage);
 
     if ( mdev.status )
         goto EXIT_ERR;
+
+
 
     goto EXIT_OK;
 
